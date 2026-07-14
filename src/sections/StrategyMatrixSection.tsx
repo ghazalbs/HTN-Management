@@ -21,13 +21,32 @@ interface Props {
   profiles: RiskProfileRow[]
 }
 
-const PROFILE_COLORS: Record<string, string> = {
-  'Female_Risk-Free': '#f87171',
-  'Female_Smoking': '#ef4444',
-  'Female_Diabetic': '#b91c1c',
-  'Male_Risk-Free': '#60a5fa',
-  'Male_Smoking': '#2563eb',
-  'Male_Diabetic': '#1e40af',
+// Quadrant → color mapping. Point color is derived from the quadrant a profile
+// falls in (relative to the median reference lines), so it always matches the
+// quadrant legend and automatically follows a point if the data moves it.
+type Quadrant = 'Q1' | 'Q2' | 'Q3' | 'Q4'
+
+const QUADRANT_COLORS: Record<Quadrant, string> = {
+  Q1: '#dc2626', // high tech, high human — red
+  Q2: '#ea580c', // high tech, low human  — orange
+  Q3: '#2563eb', // low tech, high human  — blue
+  Q4: '#16a34a', // low tech, low human   — green
+}
+
+const QUADRANTS: { q: Quadrant; title: string; text: string; card: string }[] = [
+  { q: 'Q1', title: 'Q1 (High tech, High human)', text: 'Combined measurement + updating support', card: 'bg-red-50 border-red-200' },
+  { q: 'Q2', title: 'Q2 (High tech, Low human)', text: 'Measurement technology first', card: 'bg-orange-50 border-orange-200' },
+  { q: 'Q3', title: 'Q3 (Low tech, High human)', text: 'Decision support first', card: 'bg-blue-50 border-blue-200' },
+  { q: 'Q4', title: 'Q4 (Low tech, Low human)', text: 'Lower priority for costly intervention', card: 'bg-green-50 border-green-200' },
+]
+
+function getQuadrant(tech: number, human: number, medTech: number, medHuman: number): Quadrant {
+  const highTech = tech > medTech
+  const highHuman = human > medHuman
+  if (highTech && highHuman) return 'Q1'
+  if (highTech && !highHuman) return 'Q2'
+  if (!highTech && highHuman) return 'Q3'
+  return 'Q4'
 }
 
 const columns = [
@@ -68,25 +87,27 @@ const columns = [
   { key: 'Strategy', header: 'Recommended Strategy', sortable: true },
 ]
 
+type ScatterPoint = ProfileDecomposition & { x: number; y: number; _quadrant: Quadrant; _color: string }
+
 interface CustomDotProps {
   cx?: number
   cy?: number
-  payload?: ProfileDecomposition
+  payload?: ScatterPoint
 }
 
 function CustomDot({ cx = 0, cy = 0, payload }: CustomDotProps) {
   if (!payload) return null
-  const color = PROFILE_COLORS[payload.Profile] ?? '#6b7280'
+  const color = payload._color ?? '#6b7280'
   return (
     <g>
-      <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.8} stroke="white" strokeWidth={2} />
+      <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.85} stroke="white" strokeWidth={2} />
     </g>
   )
 }
 
 interface TooltipProps {
   active?: boolean
-  payload?: Array<{ payload: ProfileDecomposition }>
+  payload?: Array<{ payload: ScatterPoint }>
 }
 
 function CustomTooltip({ active, payload }: TooltipProps) {
@@ -94,9 +115,13 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   const d = payload[0].payload
   return (
     <div className="rounded-md border border-gray-200 bg-white p-3 shadow text-xs">
-      <div className="font-semibold mb-1">{d.Profile}</div>
+      <div className="flex items-center gap-1.5 font-semibold mb-1">
+        <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d._color }} />
+        {d.Profile}
+      </div>
       <div>Tech Loss: {(d.Tech_loss_PI * 100).toFixed(1)}%</div>
       <div>Human Loss: {(d.Human_loss_PI_DeltaStar * 100).toFixed(1)}%</div>
+      <div>Quadrant: {d._quadrant}</div>
       <div>Strategy: {d.Strategy}</div>
     </div>
   )
@@ -110,11 +135,16 @@ export function StrategyMatrixSection({ profiles }: Props) {
   const medianTech = median(techVals)
   const medianHuman = median(humanVals)
 
-  const scatterData = decomp.map((d) => ({
-    ...d,
-    x: d.Tech_loss_PI * 100,
-    y: d.Human_loss_PI_DeltaStar * 100,
-  }))
+  const scatterData: ScatterPoint[] = decomp.map((d) => {
+    const quadrant = getQuadrant(d.Tech_loss_PI, d.Human_loss_PI_DeltaStar, medianTech, medianHuman)
+    return {
+      ...d,
+      x: d.Tech_loss_PI * 100,
+      y: d.Human_loss_PI_DeltaStar * 100,
+      _quadrant: quadrant,
+      _color: QUADRANT_COLORS[quadrant],
+    }
+  })
 
   return (
     <section className="mb-12">
@@ -127,14 +157,12 @@ export function StrategyMatrixSection({ profiles }: Props) {
 
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm mb-4">
         <div className="mb-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4 text-xs">
-          {[
-            { q: 'Q1 (High tech, High human)', text: 'Combined measurement + updating support', color: 'bg-red-50 border-red-200' },
-            { q: 'Q2 (High tech, Low human)', text: 'Measurement technology first', color: 'bg-orange-50 border-orange-200' },
-            { q: 'Q3 (Low tech, High human)', text: 'Decision support first', color: 'bg-blue-50 border-blue-200' },
-            { q: 'Q4 (Low tech, Low human)', text: 'Lower priority for costly intervention', color: 'bg-green-50 border-green-200' },
-          ].map((item) => (
-            <div key={item.q} className={`rounded border p-2 ${item.color}`}>
-              <div className="font-semibold text-gray-700">{item.q}</div>
+          {QUADRANTS.map((item) => (
+            <div key={item.q} className={`rounded border p-2 ${item.card}`}>
+              <div className="flex items-center gap-1.5 font-semibold text-gray-700">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: QUADRANT_COLORS[item.q] }} />
+                {item.title}
+              </div>
               <div className="text-gray-500 mt-0.5">{item.text}</div>
             </div>
           ))}
@@ -170,7 +198,7 @@ export function StrategyMatrixSection({ profiles }: Props) {
               y={medianHuman * 100}
               stroke="#94a3b8"
               strokeDasharray="4 2"
-              label={{ value: 'Median human', position: 'right', fontSize: 10, fill: '#94a3b8' }}
+              label={{ value: 'Median human', position: 'insideBottomRight', fontSize: 10, fill: '#94a3b8' }}
             />
             <Scatter
               data={scatterData}
@@ -181,16 +209,22 @@ export function StrategyMatrixSection({ profiles }: Props) {
           </ScatterChart>
         </ResponsiveContainer>
 
-        <div className="mt-4 flex flex-wrap gap-3 text-xs">
-          {decomp.map((d) => (
-            <span key={d.Profile} className="flex items-center gap-1">
-              <span
-                className="inline-block h-3 w-3 rounded-full"
-                style={{ backgroundColor: PROFILE_COLORS[d.Profile] ?? '#6b7280' }}
-              />
-              {d.Profile}
-            </span>
-          ))}
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          {QUADRANTS.map((item) => {
+            const members = scatterData.filter((d) => d._quadrant === item.q).map((d) => d.Profile)
+            return (
+              <span key={item.q} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-3 w-3 rounded-full"
+                  style={{ backgroundColor: QUADRANT_COLORS[item.q] }}
+                />
+                <span className="font-semibold text-gray-700">{item.q}</span>
+                <span className="text-gray-500">
+                  {members.length ? `— ${members.join(', ')}` : '— (none)'}
+                </span>
+              </span>
+            )
+          })}
         </div>
       </div>
 

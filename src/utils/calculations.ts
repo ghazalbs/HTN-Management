@@ -80,8 +80,10 @@ export function enrichRiskProfiles(
   raw: Array<Record<string, string>>
 ): RiskProfileRow[] {
   return raw.map((r) => ({
-    // Strip embedded newlines that appear in the CSV profile names
-    Profile: r['Profile'].replace(/\n/g, '').trim(),
+    // Strip embedded CR/LF newlines that appear inside the quoted CSV profile
+    // names (e.g. "Female_\r\nRisk-Free"). Previously only \n was removed, which
+    // left a stray \r so the label never matched the color map.
+    Profile: r['Profile'].replace(/[\r\n]+/g, '').trim(),
     NVI_KF: parseFloat(r['NVI_KF'] ?? '0'),
     NVI_DeltaStar: parseFloat(r['NVI_DeltaStar'] ?? '0'),
     NVI_DeltaL: parseFloat(r['NVI_DeltaL'] ?? '0'),

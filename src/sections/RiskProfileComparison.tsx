@@ -19,14 +19,16 @@ interface Props {
   profiles: RiskProfileRow[]
 }
 
-// Color palette: female = warmer, male = cooler; line style by risk type
+// Distinct, colorblind-friendly categorical palette — one clearly different hue
+// per risk profile. Dash pattern is kept as a redundant (non-color) encoding of
+// risk type for accessibility, but each profile is now separable by color alone.
 const PROFILE_STYLES: Record<string, { color: string; dash?: string }> = {
-  'Female_Risk-Free': { color: '#f87171', dash: '0' },
-  'Female_Smoking':   { color: '#ef4444', dash: '5 3' },
-  'Female_Diabetic':  { color: '#b91c1c', dash: '2 2' },
-  'Male_Risk-Free':   { color: '#60a5fa', dash: '0' },
-  'Male_Smoking':     { color: '#2563eb', dash: '5 3' },
-  'Male_Diabetic':    { color: '#1e40af', dash: '2 2' },
+  'Female_Risk-Free': { color: '#2563eb', dash: '0' },   // blue
+  'Female_Smoking':   { color: '#db2777', dash: '5 3' }, // magenta
+  'Female_Diabetic':  { color: '#dc2626', dash: '2 2' }, // red
+  'Male_Risk-Free':   { color: '#0d9488', dash: '0' },   // teal
+  'Male_Smoking':     { color: '#d97706', dash: '5 3' }, // amber
+  'Male_Diabetic':    { color: '#7c3aed', dash: '2 2' }, // purple
 }
 
 const NVI_COL_MAP: Record<string, keyof RiskProfileRow> = {
@@ -64,7 +66,7 @@ export function RiskProfileComparison({ profiles }: Props) {
             <strong>Strategy order:</strong>{' '}
             <TooltipLabel term="KF">KF</TooltipLabel> → <TooltipLabel term="SIL-Δ*">SIL-Δ*</TooltipLabel> → <TooltipLabel term="SIL-ΔL">SIL-ΔL</TooltipLabel> → <TooltipLabel term="SIL-ΔH">SIL-ΔH</TooltipLabel>
           </p>
-          <p>Solid lines = Risk-Free; dashed lines = Smoking; dotted lines = Diabetic. Red = Female; Blue = Male.</p>
+          <p>Each risk profile has a distinct color. Line style is a secondary cue: solid = Risk-Free; dashed = Smoking; dotted = Diabetic.</p>
         </div>
         <ResponsiveContainer width="100%" height={380}>
           <LineChart data={chartData} margin={{ top: 10, right: 100, bottom: 10, left: 10 }}>
@@ -88,9 +90,9 @@ export function RiskProfileComparison({ profiles }: Props) {
                   dataKey={profile}
                   stroke={style.color}
                   strokeDasharray={style.dash}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
+                  strokeWidth={2.75}
+                  dot={{ r: 4, fill: style.color, stroke: 'white', strokeWidth: 1 }}
+                  activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
                 />
               )
             })}

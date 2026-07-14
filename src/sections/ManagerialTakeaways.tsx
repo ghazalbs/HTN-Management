@@ -37,9 +37,8 @@ export function ManagerialTakeaways() {
     <section className="mb-12">
       <SectionHeader
         id="takeaways"
-        title="Reviewer-Facing Managerial Takeaways"
+        title="Managerial Takeaways"
         badge="8"
-        subtitle="Four key takeaways aligned with common reviewer questions about the model's practical implications."
       />
 
       <div className="grid gap-5 sm:grid-cols-2">
