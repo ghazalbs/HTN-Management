@@ -64,7 +64,7 @@ export function BreakEvenAnalysis() {
         id="break-even"
         title="Break-Even Analysis"
         badge="9"
-        subtitle="Comparing the incremental cost of automated office blood-pressure (AOBP) technology against traditional measurement, and the annual QALY gain per patient required for the technology to break even at the CADTH C$50,000/QALY threshold."
+        subtitle="Comparing the incremental cost of automated office blood-pressure (AOBP) technology against traditional measurement, and the annual QALY gain per patient required for the technology to break even at the willingness-to-pay threshold of $50K/QALY."
       />
 
       {/* Intro */}
@@ -80,7 +80,7 @@ export function BreakEvenAnalysis() {
 
       {/* Summary cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="Break-Even Verdict" accent="navy">
+        <SummaryCard title="Break-Even Verification" accent="navy">
           <div className="flex items-start gap-2">
             <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-600" />
             <p className="text-sm font-semibold leading-snug text-navy-900">
@@ -104,7 +104,7 @@ export function BreakEvenAnalysis() {
         </SummaryCard>
 
         <SummaryCard title="Conservative Model-Implied Gain" accent="red">
-          <p className="text-2xl font-bold tracking-tight text-navy-900">{implied.toFixed(5)}</p>
+          <p className="text-2xl font-bold tracking-tight text-navy-900">{implied.toFixed(6)}</p>
           <p className="mt-1 text-xs text-gray-500">QALYs / patient / year (HF = Optimal, conservative)</p>
         </SummaryCard>
       </div>
@@ -113,7 +113,7 @@ export function BreakEvenAnalysis() {
       <div className="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <h3 className="mb-1 text-sm font-semibold text-navy-900">Deployment scenario comparison</h3>
         <p className="mb-3 text-xs text-gray-500">
-          Midpoint annual cost and the conservative HF = Optimal implied gain ({implied.toFixed(5)} QALYs/patient/year).
+          Midpoint annual cost and the conservative HF = Optimal implied gain ({implied.toFixed(6)} QALYs/patient/year).
           Values are per patient per year.
         </p>
         <div className="overflow-x-auto">
@@ -125,7 +125,7 @@ export function BreakEvenAnalysis() {
                 <th className="py-2 pr-4 text-right font-semibold">Required QALY / yr</th>
                 <th className="py-2 pr-4 text-right font-semibold">Implied QALY / yr</th>
                 <th className="py-2 pr-4 text-right font-semibold">Break-even multiple</th>
-                <th className="py-2 pl-2 text-right font-semibold">Verdict</th>
+                <th className="py-2 pl-2 text-right font-semibold">Verification</th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +136,7 @@ export function BreakEvenAnalysis() {
                   <td className="py-2.5 pr-4 text-right tabular-nums text-gray-700">
                     <Sci value={s.requiredQalyMid} />
                   </td>
-                  <td className="py-2.5 pr-4 text-right tabular-nums text-gray-700">{s.impliedConservative.toFixed(5)}</td>
+                  <td className="py-2.5 pr-4 text-right tabular-nums text-gray-700">{s.impliedConservative.toFixed(6)}</td>
                   <td className="py-2.5 pr-4 text-right font-semibold tabular-nums text-navy-900">
                     {fmtMultiple(s.breakEvenMultiple)}
                   </td>
@@ -152,7 +152,7 @@ export function BreakEvenAnalysis() {
         </div>
         <p className="mt-3 text-[11px] text-gray-400">
           Break-even multiple = conservative implied gain ÷ required gain. A value ≥ 1× confirms break-even;
-          the reported multiples indicate the implied gain exceeds the required threshold by two-to-three orders of magnitude.
+          the reported multiples indicate the implied gain exceeds the required threshold by roughly two orders of magnitude.
         </p>
       </div>
 
@@ -221,7 +221,7 @@ export function BreakEvenAnalysis() {
         <div className="border-t border-gray-100 px-5 py-4">
           <p className="mb-4 text-xs leading-relaxed text-gray-500">
             Values are based on CADTH cost information and the MDP factorial analysis, as indicated in the
-            source workbook. VOI(PI) = V(PI) − V(0). Model-implied gains use Relative_value_to_PI parameters
+            source workbook. Δ(PI) = V(PI) − V(0). Model-implied gains use Relative_value_to_PI parameters
             from the factorial analysis; the annualized gain divides the absolute QALY gain by the treatment horizon.
           </p>
 
@@ -252,7 +252,7 @@ export function BreakEvenAnalysis() {
                 {[
                   ['V(PI) — perfect information', `${ASSUMPTIONS.vPI} QALYs`],
                   ['V(0) — baseline', `${ASSUMPTIONS.v0} QALYs`],
-                  ['VOI(PI) = V(PI) − V(0)', `${voiPI().toFixed(1)} QALYs`],
+                  ['Δ(PI) = V(PI) − V(0)', `${voiPI().toFixed(1)} QALYs`],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-4 py-1.5">
                     <dt className="text-gray-600">{k}</dt>
@@ -275,7 +275,7 @@ export function BreakEvenAnalysis() {
                       <tr key={h.key} className="border-b border-gray-100 last:border-0">
                         <td className="py-1.5 pr-3 text-gray-700">{h.label}</td>
                         <td className="py-1.5 pr-3 text-right tabular-nums text-gray-700">{h.relativeGain.toFixed(4)}</td>
-                        <td className="py-1.5 text-right tabular-nums text-gray-700">{h.annualizedGain.toFixed(5)}</td>
+                        <td className="py-1.5 text-right tabular-nums text-gray-700">{h.annualizedGain.toFixed(6)}</td>
                       </tr>
                     ))}
                   </tbody>

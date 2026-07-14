@@ -24,7 +24,7 @@ export const ASSUMPTIONS: Assumptions = {
   wtpThreshold: 50000,
   deviceLifetime: 5,
   patientsPerYear: 250,
-  treatmentHorizon: 10,
+  treatmentHorizon: 20,
   vPI: 12.2,
   v0: 10.7,
 }
